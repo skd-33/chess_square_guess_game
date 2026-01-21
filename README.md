@@ -1,9 +1,7 @@
 # Chess Square Guessing Game
  **Play here:**  
  https://skd-33.github.io/chess_game/
-
----
-
+ 
 ## How to Play
 
 1. Choose a **time control** (3s / 5s / 10s)
