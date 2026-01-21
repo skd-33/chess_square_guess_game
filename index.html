@@ -17,9 +17,7 @@
     color: white;
   }
 
-  .board-wrapper {
-    position: relative;
-  }
+  .board-wrapper { position: relative; }
 
   .board {
     display: grid;
@@ -36,21 +34,12 @@
     pointer-events: auto;
   }
 
-  .square {
-    position: relative;
-    box-sizing: border-box;
-  }
-
+  .square { position: relative; }
   .light { background: #f5f1e6; }
-  .dark  { background: #3b140a; }
+  .dark { background: #3b140a; }
 
-  .square.correct {
-    outline: 4px solid #00ff66;
-  }
-
-  .square.wrong {
-    outline: 4px solid red;
-  }
+  .square.correct { outline: 4px solid #00ff66; }
+  .square.wrong { outline: 4px solid red; }
 
   .cross::before {
     content: "✖";
@@ -61,7 +50,7 @@
     align-items: center;
     font-size: 36px;
     color: red;
-    text-shadow: 0 0 12px rgba(255,0,0,0.9);
+    text-shadow: 0 0 12px red;
   }
 
   .bulb-green::after,
@@ -70,8 +59,7 @@
     position: absolute;
     inset: -12px;
     border-radius: 10px;
-    opacity: 0;
-    animation: bulbPulse 0.6s ease-out forwards;
+    animation: bulb 0.6s ease-out forwards;
   }
 
   .bulb-green::after {
@@ -82,7 +70,7 @@
     background: radial-gradient(circle, rgba(255,0,0,0.8), transparent 70%);
   }
 
-  @keyframes bulbPulse {
+  @keyframes bulb {
     0% { opacity: 0; transform: scale(0.6); }
     50% { opacity: 1; transform: scale(1.2); }
     100% { opacity: 0; transform: scale(1.5); }
@@ -108,10 +96,7 @@
     border: 5px solid gold;
   }
 
-  .time-controls {
-    display: flex;
-    gap: 10px;
-  }
+  .time-controls { display: flex; gap: 10px; }
 
   .time-btn {
     padding: 6px 14px;
@@ -128,22 +113,24 @@
     color: black;
   }
 
-  button {
-    padding: 10px 18px;
-    font-size: 14px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: gold;
+  .timer {
+    font-size: 24px;
     font-weight: bold;
   }
 
-  .review-controls {
-    display: none;
-    gap: 10px;
+  .danger { color: #ff4d4d; }
+
+  button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: gold;
+    font-weight: bold;
+    cursor: pointer;
   }
 
-  /* Coordinates (review-only, created dynamically) */
+  .review-controls { display: none; gap: 10px; }
+
   .coords {
     position: absolute;
     color: #ffd966;
@@ -184,6 +171,8 @@
     <button class="time-btn" data-time="10">10s</button>
   </div>
 
+  <div class="timer" id="timer">⏱ 5</div>
+
   <div>
     ❤️ Lives: <span id="lives">3</span> |
     Score: <span id="score">0</span>
@@ -202,6 +191,7 @@
   const board = document.getElementById("board");
   const boardWrapper = document.getElementById("boardWrapper");
   const targetBox = document.getElementById("target");
+  const timerEl = document.getElementById("timer");
   const livesEl = document.getElementById("lives");
   const scoreEl = document.getElementById("score");
   const startBtn = document.getElementById("startBtn");
@@ -213,6 +203,8 @@
   let lives = 3;
   let score = 0;
   let timeLimit = 5;
+  let timeLeft = 5;
+  let timerId = null;
   let gameActive = false;
   let roundLocked = false;
 
@@ -225,6 +217,7 @@
       timeButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       timeLimit = +btn.dataset.time;
+      timerEl.textContent = "⏱ " + timeLimit;
     };
   });
 
@@ -239,11 +232,33 @@
     });
   }
 
+  function startTimer() {
+    clearInterval(timerId);
+    timeLeft = timeLimit;
+    timerEl.textContent = "⏱ " + timeLeft;
+    timerEl.classList.remove("danger");
+
+    timerId = setInterval(() => {
+      if (!gameActive || roundLocked) {
+        clearInterval(timerId);
+        return;
+      }
+      timeLeft--;
+      timerEl.textContent = "⏱ " + timeLeft;
+      if (timeLeft <= 2) timerEl.classList.add("danger");
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        handleWrong(null);
+      }
+    }, 1000);
+  }
+
   function newRound() {
     clearMarks();
     roundLocked = false;
     targetSquare = randomSquare();
     targetBox.textContent = targetSquare.toUpperCase();
+    startTimer();
   }
 
   function startGame() {
@@ -266,12 +281,14 @@
   function handleWrong(clicked) {
     if (roundLocked) return;
     roundLocked = true;
+    clearInterval(timerId);
 
     lives--;
     livesEl.textContent = lives;
+
     mistakes.push({ clicked, correct: targetSquare });
 
-    squares[clicked].classList.add("wrong","cross","bulb-red");
+    if (clicked) squares[clicked].classList.add("wrong","cross","bulb-red");
     squares[targetSquare].classList.add("correct","bulb-green");
 
     if (lives === 0) {
@@ -326,12 +343,13 @@
     for (let c = 0; c < 8; c++) {
       const sq = document.createElement("div");
       sq.className = "square " + ((r + c) % 2 === 0 ? "light" : "dark");
-
       const coord = String.fromCharCode(97 + c) + (8 - r);
       squares[coord] = sq;
 
       sq.onclick = () => {
         if (!gameActive || roundLocked) return;
+        clearInterval(timerId);
+
         if (coord === targetSquare) {
           roundLocked = true;
           sq.classList.add("correct","bulb-green");
@@ -380,4 +398,3 @@
 
 </body>
 </html>
-
