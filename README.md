@@ -1,6 +1,6 @@
 # Chess Square Guessing Game
  **Play here:**  
- https://skd-33.github.io/chess_game/
+https://skd-33.github.io/chess_square_guess_game/
  
 ## How to Play
 
